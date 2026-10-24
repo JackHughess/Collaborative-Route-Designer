@@ -59,12 +59,24 @@ The **play model** is the only thing that is shared. It holds the players, their
 | Liveblocks | Managed service with presence built in. Fastest to ship, but paid and creates vendor lock-in |
 | Supabase Realtime broadcast | Simple, but last-write-wins, so two people dragging the same point overwrite each other |
 | Turn-based locking | Simplest, but editing is not truly simultaneous |
-
 | Server-authoritative op log (custom) | Clients send typed ops (`movePlayer`, `addRoutePoint`…), the server validates them, assigns a version and broadcasts. Clean "edit elements only" API, but you write the conflict handling yourself |
 
 **Recommendation:** Yjs. It fits the "sync the model, render locally" principle directly: the Yjs document *is* the play model, edits are element-level ops, and each client renders from its local copy. Put a typed command layer (`lib/play/commands.ts`) on top so UI code calls `movePlayer(id, x, y)` instead of mutating Yjs directly. The Yjs document is the live source of truth during a session and is snapshotted to Postgres periodically and when the last user leaves.
 **Open question:** should playback be shared, with a "coach presses play and everyone watches" mode? The default is no and playback stays local, but an optional synced `{playing, startedAt}` presence field could add it later.
-**Open question:** self-host Hocuspocus (for example on Fly.io or Railway) or use a hosted Yjs provider?
+
+#### Hosting collaborative sessions
+A session is one **room per play**, keyed by play id. When the first user joins, the server loads the snapshot from Postgres. It relays updates while users edit, saves on a debounce and when the last user leaves, and then unloads the room.
+
+| Option | Notes |
+|---|---|
+| **Hocuspocus on Fly.io/Railway/Render** ⭐ | Open-source Yjs server with hooks for `onAuthenticate` (verify the Supabase JWT and play role), `onLoadDocument` and `onStoreDocument` (Postgres). About $5/month for one always-on instance. Running several instances needs the Redis extension |
+| Cloudflare Durable Objects (PartyServer / y-partyserver) | Each play gets its own object, so rooms are isolated. Scales automatically, hibernates when idle and is cheap. Code runs in the Workers runtime |
+| Hosted Yjs: Liveblocks, Y-Sweet (Jamsocket), Tiptap Cloud | No server to run. Paid per connection or room and creates vendor lock-in |
+| Supabase Realtime as a relay | Uses infrastructure you already have. There is no server-side document, so persistence and validation fall on the clients. Fragile |
+| Peer-to-peer (y-webrtc) | Needs only a signaling server, but nobody holds the document when all peers leave, and NAT issues arise. Not suitable |
+
+**Recommendation:** Hocuspocus on Fly.io for v1, because it is the simplest path with full control over auth and persistence. Durable Objects is the upgrade path if you need scale-to-zero or many concurrent rooms.
+**Open question:** should viewers connect read-only? Hocuspocus supports this through `connection.readOnly` in `onAuthenticate`.
 
 ### 4. Field rendering
 | Option | Notes |
@@ -84,17 +96,18 @@ plays          id, playbook_id, owner_id, name, formation, ydoc_snapshot (bytea)
 play_members   play_id, user_id, role ('owner' | 'editor' | 'viewer')
 invites        id, play_id, email, role, token, expires_at
 ```
-Inside the Yjs document for each play:
+**Decided:** each route is its own play, saved as its own row in `plays` with its own collaborative session. Every client runs the route locally with `simulate(model, t)`.
+Inside the Yjs document for each play (one route):
 ```
-players: Map<playerId, { label, position, x, y, color }>
-routes:  Map<routeId,  { playerId, points: Array<{x, y, type: 'line'|'curve'}>, style: 'solid'|'dashed', endCap: 'arrow'|'block', speed?: number, delay?: number }>
-meta:    Map<{ name, formation, snapCount? }>
+player:  Map<{ label, position, x, y, color }>
+route:   Map<{ points: Array<{x, y, type: 'line'|'curve'}>, style: 'solid'|'dashed', endCap: 'arrow'|'block', speed?: number, delay?: number }>
+meta:    Map<{ name, snapCount? }>
 ```
 Not in the document, because it is local per client: viewport, selection, playback time and hover state. Presence goes over Yjs awareness:
 ```
 awareness: { user: {id, name, color}, cursor: {x, y} | null, selectedIds: string[] }
 ```
-**Open question:** should routes be first-class rows in the database (making them searchable and reusable across plays) or live only inside the play document? The recommendation is to keep them in the document for v1.
+**Open question:** will several routes later be combined into one multi-player play, either by referencing route plays or by copying them in?
 
 ### 6. MVP scope
 | Option | Notes |
