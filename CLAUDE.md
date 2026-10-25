@@ -124,6 +124,42 @@ awareness: { user: {id, name, color}, cursor: {x, y} | null, selectedIds: string
 ### 8. Testing
 **Recommendation:** Vitest for unit tests (geometry helpers and the Yjs document schema) and Playwright for end-to-end tests, including one test that opens two browser contexts on the same play to verify live sync.
 
+## Auth and permissions
+
+**Identity:** Supabase Auth (email and password, magic link, Google). The browser holds a short-lived access token (JWT) and a refresh token. The Supabase client library refreshes the access token automatically. In Next.js, use `@supabase/ssr` so the session is also stored in cookies and server components and middleware can see who is logged in.
+
+**Rules:**
+- Always take the user's identity from a **verified token** (`auth.uid()` in SQL, or the verified JWT in server code). Never trust a user ID or role sent by the client.
+- **Enable RLS on every table.** A table without RLS can be read by anyone who has the public key.
+- RLS policies are the real permission check. Hiding buttons in the UI is only for UX.
+- The **secret / service-role key bypasses RLS**. Use it only in server-side code (Next.js server actions and route handlers, and the Hocuspocus server). It must never appear in client code or in a `NEXT_PUBLIC_` variable.
+
+**Roles** (stored in `play_members.role`):
+| Role | Read | Edit | Invite, rename and delete |
+|---|---|---|---|
+| owner | ✅ | ✅ | ✅ |
+| editor | ✅ | ✅ | ❌ |
+| viewer | ✅ | ❌ | ❌ |
+
+Put role checks in a SQL helper, such as `play_role(play_id) returns text`, so every policy uses the same logic.
+
+**Collaboration server (Hocuspocus `onAuthenticate`):**
+1. The client connects with `token` set to its current Supabase access token.
+2. The server verifies the JWT. Newer Supabase projects use asymmetric signing keys verified against `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`, so no secret is needed. Projects on the legacy key use `SUPABASE_JWT_SECRET`.
+3. The server looks up `play_members` for `(play_id = documentName, user_id)`. With no row, reject the connection. A `viewer` connects with `connection.readOnly = true`. An `editor` or `owner` gets full access.
+4. Loading and saving the document use the secret key on the server.
+5. When the client reconnects, it sends a freshly refreshed token.
+
+**Invites:**
+1. The owner creates an `invites` row with a random token (`crypto.randomUUID()` or 32 random bytes), a role and `expires_at`, then emails `${SITE_URL}/invite/<token>`.
+2. The recipient signs in. A server action validates the token and its expiry, inserts the `play_members` row and deletes the invite. This runs server-side because the recipient isn't a member yet, so RLS would block them.
+
+## Environment variables
+
+Documented in `.env.example`. Real values go in `.env.local`, which git ignores. In production they go into the Vercel and Fly.io dashboards or secrets, never into git.
+- **Public (safe in the browser):** the Supabase URL, the publishable/anon key, the collaboration WebSocket URL and the site URL. These are prefixed with `NEXT_PUBLIC_`.
+- **Secret (server only):** the Supabase secret/service-role key, the email provider API key, and `SUPABASE_JWT_SECRET` (legacy projects only).
+
 ## Conventions (once code exists)
 - TypeScript `strict` mode, with no `any` in shared types.
 - Keep geometry and route math in pure functions under `lib/field/` and unit test them.
