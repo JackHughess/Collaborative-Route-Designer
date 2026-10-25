@@ -162,7 +162,10 @@ Documented in `.env.example`. Real values go in `.env.local`, which git ignores.
 
 ## Commands
 
-_TBD once the project is scaffolded (`dev`, `build`, `test`, `lint`, and `dev:collab` for the Hocuspocus server)._
+- `npm run dev`: start the Next.js dev server on http://localhost:3000
+- `npm run build` / `npm start`: production build and server
+- `npm run lint`: ESLint
+- _TBD: `test` (Vitest), `test:e2e` (Playwright) and `dev:collab` for the Hocuspocus server._
 
 ## Later (not in v1)
 

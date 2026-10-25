@@ -5,8 +5,16 @@
 # Dependencies and build output
 node_modules/
 .next/
+out/
+build/
 dist/
 coverage/
+next-env.d.ts
+*.tsbuildinfo
+.vercel
+
+# Logs
+npm-debug.log*
 
 # OS / editor
 .DS_Store
