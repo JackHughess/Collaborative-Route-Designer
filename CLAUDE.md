@@ -83,7 +83,7 @@ Y.Doc (local copy) ──observeDeep──▶ PlayModel (immutable snapshot) ─
 2. **Coordinates:** all geometry is stored in **yards**. x runs from 0 to 53.3 across the field, and y is yards from the line of scrimmage (positive is downfield). The SVG `viewBox` is set in yards, so no manual pixel conversion is needed. Zoom and pan only change the `viewBox`.
 3. **Static render:** the field and yard lines, then a circle per player, then a path per route (Béziers for curve segments, `stroke-dasharray` for dashed routes, and an arrow or block end cap).
 4. **Playback:** for each route, precompute a polyline sampled at a fixed resolution together with the cumulative distance along it, memoized per route. `simulate(model, t)` returns every player's position at time `t` seconds after the snap. A player is stationary until their `delay`, then has covered `speed × (t − delay)` yards along the path. A local `requestAnimationFrame` loop advances `t`. Play, pause and the scrubber are local only. If the model changes mid-playback, the next frame uses the new model.
-5. **Presence layer:** other users' cursors and selection outlines come from Yjs awareness (in yards) and are drawn on top.
+5. **Presence layer:** The player(s) that other users select show outlines from Yjs awareness (in yards) and are drawn on top.
 
 ## Data model
 
