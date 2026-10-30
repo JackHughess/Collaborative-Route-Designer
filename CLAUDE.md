@@ -13,7 +13,7 @@ A play is a formation of players, each with a route. Users sign in, save plays t
 - **Playback:** run the play and watch every player run their route at the same time.
 - **Persistence:** every play is saved to the database and autosaves while you edit.
 - **Real-time collaboration:** several users edit one play at once. Each sees the others' cursors, selections and edits live, so one person can adjust the slot receiver while another redraws the tight end's route.
-- **Sharing:** the owner invites collaborators by email link as an `editor` or a `viewer`.
+- **Sharing:** the owner creates an invite link as an `editor` or a `viewer` and sends it to the collaborator themselves (the app does not send email).
 
 ## Core architecture: sync the model, render locally
 
@@ -92,7 +92,7 @@ Y.Doc (local copy) ──observeDeep──▶ PlayModel (immutable snapshot) ─
 ```
 plays          id, owner_id, name, ydoc_snapshot (bytea), thumbnail_url, created_at, updated_at
 play_members   play_id, user_id, role ('owner' | 'editor' | 'viewer')   -- PK (play_id, user_id)
-invites        id, play_id, email, role, token, expires_at
+invites        id, play_id, email (optional label for who it's for), role, token, expires_at
 ```
 `plays.name` is mirrored from the document in `onStoreDocument`, so the dashboard can list plays without decoding snapshots.
 
@@ -136,14 +136,14 @@ A player can have more than one route; option routes are extra branches. Deletin
 4. On reconnect, the client sends a freshly refreshed token.
 
 **Invites:**
-1. The owner creates an `invites` row with a random token, a role and `expires_at` (7 days), and the app emails `${NEXT_PUBLIC_SITE_URL}/invite/<token>`.
+1. The owner creates an `invites` row with a random token, a role and `expires_at` (7 days). The share dialog shows `${NEXT_PUBLIC_SITE_URL}/invite/<token>` with a copy button, and the owner sends the link however they like. The app sends no email, so there is no email provider.
 2. The recipient signs in, and a server action validates the token, inserts the `play_members` row and deletes the invite. This runs server-side because the recipient isn't a member yet.
 
 ## Environment variables
 
 Documented in `.env.example`. Real values go in `.env.local`, which git ignores. In production they are set in the Vercel dashboard and with `fly secrets set`, never in git.
 - **Public (`NEXT_PUBLIC_`, safe in the browser):** `SUPABASE_URL`, `SUPABASE_ANON_KEY` (publishable), `COLLAB_URL` and `SITE_URL`.
-- **Secret (server only):** `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, and `SUPABASE_JWT_SECRET` (legacy projects only).
+- **Secret (server only):** `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_JWT_SECRET` (legacy projects only).
 
 ## Testing
 
