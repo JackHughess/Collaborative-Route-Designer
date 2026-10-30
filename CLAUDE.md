@@ -40,7 +40,8 @@ The **play model** is the only thing that is shared. It holds the players, their
 | Database, auth and storage | Supabase (Postgres with RLS, Supabase Auth via `@supabase/ssr`) |
 | Real-time sync | Yjs (CRDT) |
 | Collaboration server | Hocuspocus (Node) |
-| Hosting | Vercel for the web app, Fly.io for Hocuspocus, Supabase for the database and auth |
+| Hosting | Vercel for the web app, Fly.io for Hocuspocus (built from `server/Dockerfile`), Supabase for the database and auth |
+| Local development | Supabase CLI (`supabase start`, which runs a local stack in Docker). The web app and Hocuspocus run directly with npm, not in containers |
 | Testing | Vitest for unit tests, Playwright for end-to-end tests |
 
 ## Project structure
@@ -166,6 +167,18 @@ Documented in `.env.example`. Real values go in `.env.local`, which git ignores.
 - `npm run build` / `npm start`: production build and server
 - `npm run lint`: ESLint
 - _TBD: `test` (Vitest), `test:e2e` (Playwright) and `dev:collab` for the Hocuspocus server._
+
+### Local Supabase (requires Docker Desktop running)
+- `supabase start`: start a local Supabase stack (Postgres, Auth, Storage and Studio) in Docker. It prints the local URL (`http://127.0.0.1:54321`) and keys to put in `.env.local`
+- `supabase db reset`: rebuild the local database from `supabase/migrations/`. Run this after adding or editing a migration
+- `supabase migration new <name>`: create a new migration file
+- `supabase stop`: stop the local stack
+- `supabase db push`: apply migrations to the linked cloud project. Only do this deliberately, never as part of routine local work
+
+### Docker usage
+- Docker is used **only** for the local Supabase stack and for deploying Hocuspocus. Don't containerize the Next.js app, because Vercel builds it directly.
+- `server/Dockerfile` builds the Hocuspocus server for Fly.io or Render. Keep it minimal: a Node LTS image, `npm ci --omit=dev`, then start the server. Secrets come from `fly secrets set`, never from the image.
+- A `docker-compose.yml` for the whole stack is optional and deferred until there are other contributors.
 
 ## Later (not in v1)
 
