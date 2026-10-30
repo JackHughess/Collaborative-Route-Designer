@@ -100,11 +100,13 @@ invites        id, play_id, email (optional label for who it's for), role, token
 ```
 meta:     Y.Map  { name, formation, notes? }
 players:  Y.Map<playerId, Y.Map { label, position, x, y, color }>
-routes:   Y.Map<routeId,  Y.Map { playerId, points: Y.Array<{x, y, type: 'line'|'curve'}>,
+routes:   Y.Map<routeId,  Y.Map { playerId, points: Y.Array<Y.Map {x, y, type: 'line'|'curve'}>,
                                   style: 'solid'|'dashed', endCap: 'arrow'|'block',
-                                  speed: number, delay: number }>
+                                  speed: number, delay: number, option: boolean }>
 ```
-A player can have more than one route; option routes are extra branches. Deleting a player deletes their routes in the same transaction.
+A route starts at its player's spot. A point's `type` describes the segment that ends at it: `line` is straight, `curve` is a Catmull-Rom curve drawn as a cubic Bézier, so rendering and playback follow the same path. Route points are `Y.Map`s, not plain objects, so two people dragging the same point merge instead of duplicating it.
+
+A player can have more than one route. Option routes (`option: true`) are extra branches that copy the main route's stem; they are drawn but not run in playback. In playback each player runs their main route: the first non-option route by id, a stable order on every client. Deleting a player deletes their routes in the same transaction.
 
 **Local only (never synced):** viewport, selection, hover, playback time and playing state.
 
