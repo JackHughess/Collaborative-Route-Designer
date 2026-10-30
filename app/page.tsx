@@ -8,7 +8,10 @@ export default function Home() {
         Design football plays and edit them together in real time.
       </p>
       <div className="flex gap-4">
-        <Link href="/login" className="rounded bg-foreground px-4 py-2 text-background">
+        <Link
+          href="/login"
+          className="bg-foreground text-background rounded px-4 py-2"
+        >
           Sign in
         </Link>
         <Link href="/dashboard" className="rounded border px-4 py-2">
