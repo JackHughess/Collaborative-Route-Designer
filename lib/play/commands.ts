@@ -125,8 +125,12 @@ function addPlayerInner(doc: Y.Doc, player: NewPlayer): string {
 }
 
 export function movePlayer(doc: Y.Doc, id: string, x: number, y: number) {
-  // TODO(exercise 1a): move player `id` to (x, y), kept on the field.
-  // Look at updatePlayer just below for the shape of a command.
+  const player = getPlayers(doc).get(id);
+  if (!player) return;
+  transact(doc, () => {
+    player.set("x", clampX(x));
+    player.set("y", clampY(y));
+  });
 }
 
 export interface PlayerPatch {
@@ -147,8 +151,18 @@ export function updatePlayer(doc: Y.Doc, id: string, patch: PlayerPatch) {
 
 /** Delete a player and all of their routes. */
 export function deletePlayer(doc: Y.Doc, id: string) {
-  // TODO(exercise 1b): remove the player and every route that belongs to them,
-  // as a single change. (Careful deleting from a map while looping over it.)
+  const routes = getRoutes(doc);
+  const routeIds = Array.from(routes.keys());
+  transact(doc, () => {
+    if (!getPlayers(doc).has(id)) return;
+    getPlayers(doc).delete(id);
+    routeIds.forEach((routeId) => {
+      if (routes.get(routeId)?.get("playerId") === id) {
+        // delete route
+        routes.delete(routeId);
+      }
+    });
+  });
 }
 
 // ── Routes ──────────────────────────────────────────────────────────
