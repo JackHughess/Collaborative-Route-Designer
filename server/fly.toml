@@ -1,0 +1,35 @@
+# Fly.io config for the collaboration server. Deploy from this folder:
+#   cd server
+#   fly launch --no-deploy      # first time only: pick an app name and region
+#   fly secrets set SUPABASE_URL=https://<ref>.supabase.co SUPABASE_SERVICE_ROLE_KEY=<secret>
+#   fly deploy
+# Then set NEXT_PUBLIC_COLLAB_URL=wss://<app>.fly.dev in Vercel.
+
+app = "route-designer-collab"   # change to the name you pick in `fly launch`
+primary_region = "sjc"           # change to the region closest to your users
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "1234"
+
+[http_service]
+  internal_port = 1234
+  force_https = true
+  # Rooms live in memory. Keep one machine running so live sessions aren't cut
+  # off; edits are saved to Postgres, so a restart only drops presence.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/health"
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "10s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

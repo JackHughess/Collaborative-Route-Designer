@@ -1,0 +1,6 @@
+node_modules
+src/**/*.test.ts
+vitest.config.ts
+tsconfig.json
+fly.toml
+.env*

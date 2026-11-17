@@ -166,9 +166,18 @@ Documented in `.env.example`. Real values go in `.env.local`, which git ignores.
 ## Commands
 
 - `npm run dev`: start the Next.js dev server on http://localhost:3000
+- `npm run dev:collab`: start the Hocuspocus server on ws://localhost:1234 (reads `.env` / `.env.local`). Run it alongside `npm run dev`
 - `npm run build` / `npm start`: production build and server
-- `npm run lint`: ESLint
-- _TBD: `test` (Vitest), `test:e2e` (Playwright) and `dev:collab` for the Hocuspocus server._
+- `npm run lint`, `npm run typecheck`, `npm run format`: ESLint, `tsc --noEmit`, Prettier
+- `npm test`: Vitest unit tests (geometry, simulate, commands, merging)
+- `npm run test:db`: pgTAP RLS tests in `supabase/tests/`, run against the linked project inside a rolled-back transaction (`-- --local` for the local stack)
+- `npm run test:e2e`: Playwright. Builds the app, serves it on port 3100, starts the collab server, and signs in as the `E2E_*` accounts from `.env`
+- In `server/`: `npm test` (server tests with an in-process Hocuspocus) and `npm run typecheck`
+
+### Deploying
+- Web app: Vercel builds from the repo. Set the public variables plus `SUPABASE_SERVICE_ROLE_KEY` in the Vercel dashboard, with `NEXT_PUBLIC_SITE_URL` as the Vercel URL and `NEXT_PUBLIC_COLLAB_URL` as `wss://<fly-app>.fly.dev`.
+- Collaboration server: from `server/`, `fly launch --no-deploy` once, `fly secrets set SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=…`, then `fly deploy` (`server/fly.toml`, health check on `/health`).
+- Supabase: Authentication → URL Configuration needs the Site URL and `<site>/auth/callback` as a redirect URL for each environment.
 
 ### Local Supabase (requires Docker Desktop running)
 - `supabase start`: start a local Supabase stack (Postgres, Auth, Storage and Studio) in Docker. It prints the local URL (`http://127.0.0.1:54321`) and keys to put in `.env.local`
