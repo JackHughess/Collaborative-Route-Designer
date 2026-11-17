@@ -35,12 +35,12 @@ export function createCollabServer(options: CollabServerOptions) {
   const { verifyToken, store } = options;
   const log = options.log ?? ((m, e) => console.error(m, e ?? ""));
 
+  // Who is this, and what may they do in this play? Throw to refuse them.
   async function authorize(token: string, playId: string): Promise<CollabContext> {
-    if (!UUID.test(playId)) throw new Error("invalid play id");
-    const user = await verifyToken(token);
-    const role = await store.getRole(playId, user.id);
-    if (!role) throw new Error("not a member of this play");
-    return { userId: user.id, role };
+    // TODO(exercise 3a): three checks, in order. The room name is the play id
+    // (UUID is defined above), the token must verify, and the user must be a
+    // member (see PlayStore in store.ts).
+    throw new Error("not implemented");
   }
 
   return new Server<CollabContext>({
@@ -59,7 +59,8 @@ export function createCollabServer(options: CollabServerOptions) {
     }: onAuthenticatePayload<CollabContext>) {
       try {
         const context = await authorize(token, documentName);
-        connectionConfig.readOnly = context.role === "viewer";
+        // TODO(exercise 3b): viewers must not be able to change the play.
+        // connectionConfig has the switch you need.
         return context;
       } catch (error) {
         // Hocuspocus rejects the connection when this throws.

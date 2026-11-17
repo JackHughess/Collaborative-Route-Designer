@@ -98,5 +98,11 @@ select isnt_empty(
   'the owner can rename the play'
 );
 
+-- TODO(exercise 5): two tests about play_members, in the style above.
+--   1. As the editor (…0b): trying to remove the viewer (…0c) removes nothing.
+--   2. As the viewer (…0c): leaving the play (deleting their own row) works.
+-- Find the policy that decides this in supabase/migrations/, and remember to
+-- update plan() at the top.
+
 select * from finish();
 rollback;

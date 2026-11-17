@@ -53,16 +53,10 @@ export function usePlayback(model: PlayModel): Playback {
     let frame = 0;
     let last = performance.now();
     const tick = (now: number) => {
-      const dt = ((now - last) / 1000) * rate;
-      last = now;
-      const next = Math.min(tRef.current + dt, durationRef.current);
-      tRef.current = next;
-      setT(next);
-      if (next >= durationRef.current) {
-        setPlaying(false);
-        return;
-      }
-      frame = requestAnimationFrame(tick);
+      // TODO(exercise 4): advance the clock by the time since the last frame
+      // (`now` and `last` are in ms; t is in seconds; respect `rate`), stop at
+      // the end of the play, and otherwise ask for the next frame.
+      // Read tRef/durationRef, not t/duration: this closure outlives renders.
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);

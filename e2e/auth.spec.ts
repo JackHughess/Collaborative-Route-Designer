@@ -20,12 +20,7 @@ test("a wrong password shows an error and stays on the sign-in page", async ({ p
   await expect(page).toHaveURL(/\/login/);
 });
 
-test("signing out ends the session", async ({ page }) => {
-  await page.goto("/login");
-  await signIn(page, accounts.owner());
-  await expect(page).toHaveURL(/\/dashboard$/);
-  await page.getByRole("button", { name: "Sign out" }).click();
-  await expect(page).toHaveURL(/\/login/);
-  await page.goto("/dashboard");
-  await expect(page).toHaveURL(/\/login/);
-});
+// TODO(task B): sign in, sign out, and prove the dashboard is locked again.
+// The two tests above show every piece you need. Change `test.fixme` to `test`
+// when it's written.
+test.fixme("signing out ends the session", async ({ page }) => {});

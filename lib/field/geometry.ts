@@ -130,16 +130,12 @@ export function pointAtDistance(path: SampledPath, d: number): Point {
   const { points, cumulative, length } = path;
   if (d <= 0 || points.length === 1) return points[0];
   if (d >= length) return points[points.length - 1];
-  let lo = 0;
-  let hi = cumulative.length - 1;
-  while (hi - lo > 1) {
-    const mid = (lo + hi) >> 1;
-    if (cumulative[mid] <= d) lo = mid;
-    else hi = mid;
-  }
-  const span = cumulative[hi] - cumulative[lo];
-  const t = span === 0 ? 0 : (d - cumulative[lo]) / span;
-  return add(points[lo], scale(sub(points[hi], points[lo]), t));
+
+  // TODO(exercise 2a): d is somewhere strictly inside the path.
+  // Find the two neighbouring samples whose cumulative distances surround d,
+  // then return the point that fraction of the way between them.
+  // (add, sub and scale above are handy. Bonus: cumulative is sorted.)
+  return points[0];
 }
 
 // ── Simulation ──────────────────────────────────────────────────────
@@ -194,14 +190,10 @@ export function primaryRoute(
 export function simulate(model: PlayModel, t: number): Record<string, Point> {
   const positions: Record<string, Point> = {};
   for (const player of Object.values(model.players)) {
-    const route = primaryRoute(model, player.id);
-    if (!route) {
-      positions[player.id] = { x: player.x, y: player.y };
-      continue;
-    }
-    const travelled = route.speed * Math.max(0, t - route.delay);
-    const p = pointAtDistance(routePath(route, player), travelled);
-    positions[player.id] = { x: p.x, y: p.y };
+    // TODO(exercise 2b): where is this player at time t?
+    // Re-read the doc comment above, then use primaryRoute, routePath and
+    // pointAtDistance from this file.
+    positions[player.id] = { x: player.x, y: player.y };
   }
   return positions;
 }
