@@ -4,7 +4,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(16);
+select plan(19);
 
 -- Users: owner, editor, viewer, outsider.
 insert into auth.users (id, email, aud, role) values
@@ -29,7 +29,14 @@ insert into invites (play_id, role, token) values
   ('11111111-1111-1111-1111-111111111111', 'editor', 'editor-token'),
   ('11111111-1111-1111-1111-111111111111', 'viewer', 'viewer-token');
 
+-- The invitee can preview the invite before accepting; a bad token shows nothing.
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}';
+select results_eq(
+  $$ select play_name, role, already_member from invite_preview('editor-token') $$,
+  $$ values ('Test play', 'editor', false) $$,
+  'an invitee can preview the play and role'
+);
+select is_empty($$ select * from invite_preview('wrong-token') $$, 'a wrong token previews nothing');
 select is(
   accept_invite('editor-token'), '11111111-1111-1111-1111-111111111111'::uuid,
   'accepting an invite returns the play id'
@@ -79,6 +86,10 @@ select throws_ok(
   $$ update plays set ydoc_snapshot = '\x00' where id = '11111111-1111-1111-1111-111111111111' $$,
   '42501', null, 'clients cannot write the snapshot directly'
 );
+
+-- Editors can't see invite tokens; only the owner can.
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}';
+select is_empty($$ select token from invites $$, 'an editor cannot read invite tokens');
 
 -- Owner can rename.
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}';

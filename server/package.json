@@ -1,0 +1,28 @@
+{
+  "name": "route-designer-collab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=../.env --env-file-if-exists=../.env.local src/index.ts",
+    "start": "node src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hocuspocus/extension-database": "^4.8.0",
+    "@hocuspocus/server": "^4.8.0",
+    "@supabase/supabase-js": "^2.118.0",
+    "jose": "^6.2.14",
+    "yjs": "^13.6.33"
+  },
+  "devDependencies": {
+    "@hocuspocus/provider": "^4.8.0",
+    "@types/node": "^24.19.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  }
+}

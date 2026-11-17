@@ -45,7 +45,6 @@ export default async function PlayPage({
   return (
     <PlayEditor
       playId={play.id}
-      initialName={play.name}
       snapshot={play.ydoc_snapshot}
       role={play.role}
       user={user}

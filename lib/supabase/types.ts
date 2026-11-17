@@ -91,6 +91,15 @@ export interface Database {
         Args: { p_token: string };
         Returns: string;
       };
+      invite_preview: {
+        Args: { p_token: string };
+        Returns: {
+          play_name: string;
+          role: InviteRole;
+          expires_at: string;
+          already_member: boolean;
+        }[];
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
