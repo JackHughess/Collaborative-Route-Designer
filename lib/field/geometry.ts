@@ -141,24 +141,24 @@ export function pointAtDistance(path: SampledPath, d: number): Point {
   let midIndex = (lowIndex + highIndex) >> 1;
   while (lowIndex < highIndex) {
     midIndex = (lowIndex + highIndex) >> 1;
-    let above = d > cumulative[midIndex];
+    const above = d > cumulative[midIndex];
     if (above) lowIndex = midIndex + 1;
     else highIndex = midIndex;
   }
-  let p1Index = lowIndex - 1;
-  let p2Index = lowIndex;
+  const p1Index = lowIndex - 1;
+  const p2Index = lowIndex;
 
-  let p1Dist = Math.abs(d - cumulative[p1Index]);
-  let p2Dist = Math.abs(d - cumulative[p2Index]);
-  let distProp = p1Dist / (p2Dist + p1Dist);
+  const p1Dist = Math.abs(d - cumulative[p1Index]);
+  const p2Dist = Math.abs(d - cumulative[p2Index]);
+  const distProp = p1Dist / (p2Dist + p1Dist);
 
-  let p1 = points[p1Index];
-  let p2 = points[p2Index];
+  const p1 = points[p1Index];
+  const p2 = points[p2Index];
 
-  let xDiff = p2.x - p1.x;
-  let yDiff = p2.y - p1.y;
+  const xDiff = p2.x - p1.x;
+  const yDiff = p2.y - p1.y;
 
-  let p: Point = {x: p1.x + xDiff*distProp, y: p1.y + yDiff*distProp};
+  const p: Point = {x: p1.x + xDiff*distProp, y: p1.y + yDiff*distProp};
   return p;
 }
 
