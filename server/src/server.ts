@@ -3,6 +3,7 @@ import { Server, type onAuthenticatePayload } from "@hocuspocus/server";
 import * as Y from "yjs";
 import type { VerifyToken } from "./auth.ts";
 import type { PlayStore, Role } from "./store.ts";
+import { verify } from "crypto";
 
 export interface CollabContext {
   userId: string;
@@ -37,10 +38,22 @@ export function createCollabServer(options: CollabServerOptions) {
 
   // Who is this, and what may they do in this play? Throw to refuse them.
   async function authorize(token: string, playId: string): Promise<CollabContext> {
-    // TODO(exercise 3a): three checks, in order. The room name is the play id
+    // three checks, in order. The room name is the play id
     // (UUID is defined above), the token must verify, and the user must be a
     // member (see PlayStore in store.ts).
-    throw new Error("not implemented");
+    // need to have supabase access token JWT
+    // output: CollabContext = { userId, role }
+    // throw error if fails
+    if (!UUID.test(playId)) { // check if id is a valid uuid
+      throw new Error("invalid Play ID");
+    }
+    const user  = await verifyToken(token);
+    const role = await store.getRole(playId, user.id);
+    if (role !== "owner" && role !== "editor" && role !== "viewer") {
+      if (!role) throw new Error("role invalid");
+      else throw new Error("bad role");
+    }
+    return {userId: user.id, role: role};
   }
 
   return new Server<CollabContext>({
@@ -59,8 +72,9 @@ export function createCollabServer(options: CollabServerOptions) {
     }: onAuthenticatePayload<CollabContext>) {
       try {
         const context = await authorize(token, documentName);
-        // TODO(exercise 3b): viewers must not be able to change the play.
+        // viewers must not be able to change the play.
         // connectionConfig has the switch you need.
+        connectionConfig.readOnly = context.role === "viewer";
         return context;
       } catch (error) {
         // Hocuspocus rejects the connection when this throws.

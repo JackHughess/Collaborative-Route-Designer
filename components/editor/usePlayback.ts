@@ -10,6 +10,7 @@ import {
 } from "react";
 import { playDuration, simulate } from "@/lib/field/geometry";
 import type { PlayModel, Point } from "@/lib/play/types";
+import next from "next";
 
 export const PLAYBACK_RATES = [0.25, 0.5, 1, 2] as const;
 export type PlaybackRate = (typeof PLAYBACK_RATES)[number];
@@ -57,6 +58,15 @@ export function usePlayback(model: PlayModel): Playback {
       // (`now` and `last` are in ms; t is in seconds; respect `rate`), stop at
       // the end of the play, and otherwise ask for the next frame.
       // Read tRef/durationRef, not t/duration: this closure outlives renders.
+      const diff = ((now - last) / 1000 ) * rate;
+      last = now;
+      const next = Math.min(tRef.current + diff, durationRef.current);
+      tRef.current = next;
+      setT(next);
+      if (next >= durationRef.current) {
+        setPlaying(false);
+        return;
+      }
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);

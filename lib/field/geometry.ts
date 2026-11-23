@@ -1,4 +1,5 @@
 import type { PlayModel, Point, Route, RoutePoint } from "@/lib/play/types";
+import { continueDynamicHTMLResumeNode } from "next/dist/server/app-render/stream-ops.web";
 
 // Pure route geometry in yards. A route starts at its player's spot and runs
 // through its points. A "curve" point makes the segment ending there a smooth
@@ -131,11 +132,34 @@ export function pointAtDistance(path: SampledPath, d: number): Point {
   if (d <= 0 || points.length === 1) return points[0];
   if (d >= length) return points[points.length - 1];
 
-  // TODO(exercise 2a): d is somewhere strictly inside the path.
+  // TODO(exercise 1a): d is somewhere strictly inside the path.
   // Find the two neighbouring samples whose cumulative distances surround d,
   // then return the point that fraction of the way between them.
   // (add, sub and scale above are handy. Bonus: cumulative is sorted.)
-  return points[0];
+  let lowIndex = 0;
+  let highIndex = cumulative.length - 1;
+  let midIndex = (lowIndex + highIndex) >> 1;
+  while (lowIndex < highIndex) {
+    midIndex = (lowIndex + highIndex) >> 1;
+    let above = d > cumulative[midIndex];
+    if (above) lowIndex = midIndex + 1;
+    else highIndex = midIndex;
+  }
+  let p1Index = lowIndex - 1;
+  let p2Index = lowIndex;
+
+  let p1Dist = Math.abs(d - cumulative[p1Index]);
+  let p2Dist = Math.abs(d - cumulative[p2Index]);
+  let distProp = p1Dist / (p2Dist + p1Dist);
+
+  let p1 = points[p1Index];
+  let p2 = points[p2Index];
+
+  let xDiff = p2.x - p1.x;
+  let yDiff = p2.y - p1.y;
+
+  let p: Point = {x: p1.x + xDiff*distProp, y: p1.y + yDiff*distProp};
+  return p;
 }
 
 // ── Simulation ──────────────────────────────────────────────────────
@@ -190,10 +214,18 @@ export function primaryRoute(
 export function simulate(model: PlayModel, t: number): Record<string, Point> {
   const positions: Record<string, Point> = {};
   for (const player of Object.values(model.players)) {
-    // TODO(exercise 2b): where is this player at time t?
-    // Re-read the doc comment above, then use primaryRoute, routePath and
-    // pointAtDistance from this file.
+
     positions[player.id] = { x: player.x, y: player.y };
+    const route = primaryRoute(model, player.id);
+    if (!route) {
+      continue;
+    }
+    const spd = route.speed;
+    const path = routePath(route, player);
+    const dly = route.delay;
+    const x = spd * Math.max((t - dly), 0);
+    const p = pointAtDistance(path, x);
+    positions[player.id] = { x: p.x, y: p.y };
   }
   return positions;
 }

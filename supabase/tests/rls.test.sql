@@ -4,7 +4,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(19);
+select plan(22);
 
 -- Users: owner, editor, viewer, outsider.
 insert into auth.users (id, email, aud, role) values
@@ -98,11 +98,47 @@ select isnt_empty(
   'the owner can rename the play'
 );
 
--- TODO(exercise 5): two tests about play_members, in the style above.
+-- two tests about play_members, in the style above.
 --   1. As the editor (…0b): trying to remove the viewer (…0c) removes nothing.
 --   2. As the viewer (…0c): leaving the play (deleting their own row) works.
 -- Find the policy that decides this in supabase/migrations/, and remember to
 -- update plan() at the top.
+
+
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b", "role":"authenticated"}';
+select is_empty(
+  $$
+    delete from play_members
+    where play_id = '11111111-1111-1111-1111-111111111111'
+    and user_id = '00000000-0000-0000-0000-00000000000c'
+    returning user_id 
+  $$,
+  'editor should not be able to remove a viewer'
+);
+
+
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000c", "role":"authenticated"}';
+select isnt_empty(
+  $$
+    delete from play_members
+    where play_id = '11111111-1111-1111-1111-111111111111'
+    and user_id = '00000000-0000-0000-0000-00000000000c'
+    returning user_id
+  $$,
+  'viewer should be able to remove themself'
+);
+
+
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a", "role":"authenticated"}';
+select is_empty(
+  $$
+  delete from play_members
+  where play_id = '11111111-1111-1111-1111-111111111111'
+  and user_id = '00000000-0000-0000-0000-00000000000a'
+  returning user_id
+  $$,
+  'owner should not be able to remove themself'
+);
 
 select * from finish();
 rollback;
