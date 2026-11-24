@@ -1,5 +1,10 @@
 import * as Y from "yjs";
-import { FIELD_WIDTH, MAX_Y, MIN_Y } from "@/lib/field/constants";
+import {
+  FIELD_WIDTH,
+  MAX_PLAYER_Y,
+  MAX_Y,
+  MIN_Y,
+} from "@/lib/field/constants";
 import { colorForPosition, getFormation } from "./formations";
 import {
   DEFAULT_DELAY,
@@ -34,6 +39,11 @@ function clampX(x: number) {
 
 function clampY(y: number) {
   return round(Math.min(MAX_Y, Math.max(MIN_Y, y)));
+}
+
+/** Players line up behind the line of scrimmage; only their routes go downfield. */
+function clampPlayerY(y: number) {
+  return round(Math.min(MAX_PLAYER_Y, Math.max(MIN_Y, y)));
 }
 
 function makePoint(point: RoutePoint): YField {
@@ -118,7 +128,7 @@ function addPlayerInner(doc: Y.Doc, player: NewPlayer): string {
   map.set("label", player.label);
   map.set("position", player.position);
   map.set("x", clampX(player.x));
-  map.set("y", clampY(player.y));
+  map.set("y", clampPlayerY(player.y));
   map.set("color", player.color ?? colorForPosition(player.position));
   getPlayers(doc).set(id, map);
   return id;
@@ -129,7 +139,7 @@ export function movePlayer(doc: Y.Doc, id: string, x: number, y: number) {
   if (!player) return;
   transact(doc, () => {
     player.set("x", clampX(x));
-    player.set("y", clampY(y));
+    player.set("y", clampPlayerY(y));
   });
 }
 

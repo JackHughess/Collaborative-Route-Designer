@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as Y from "yjs";
-import { FIELD_WIDTH, MAX_Y, MIN_Y } from "@/lib/field/constants";
+import { FIELD_WIDTH, MAX_PLAYER_Y, MIN_Y } from "@/lib/field/constants";
 import {
   addOptionRoute,
   addPlayer,
@@ -101,10 +101,10 @@ describe("players", () => {
 
   it("moves a player and clamps to the field", () => {
     const { doc, id } = withPlayer();
-    movePlayer(doc, id, 10.123, 3.456);
-    expect(model(doc).players[id]).toMatchObject({ x: 10.12, y: 3.46 });
+    movePlayer(doc, id, 10.123, -3.456);
+    expect(model(doc).players[id]).toMatchObject({ x: 10.12, y: -3.46 });
     movePlayer(doc, id, -5, 999);
-    expect(model(doc).players[id]).toMatchObject({ x: 0, y: MAX_Y });
+    expect(model(doc).players[id]).toMatchObject({ x: 0, y: MAX_PLAYER_Y });
     movePlayer(doc, id, 999, -999);
     expect(model(doc).players[id]).toMatchObject({ x: FIELD_WIDTH, y: MIN_Y });
   });
@@ -241,14 +241,14 @@ describe("transactions and undo", () => {
       [doc.getMap("meta"), doc.getMap("players"), doc.getMap("routes")],
       { trackedOrigins: new Set([LOCAL_ORIGIN]), captureTimeout: 0 },
     );
-    movePlayer(doc, id, 30, 4);
+    movePlayer(doc, id, 30, -4);
     deletePlayer(doc, id);
     undo.undo();
-    expect(model(doc).players[id]).toMatchObject({ x: 30, y: 4 });
+    expect(model(doc).players[id]).toMatchObject({ x: 30, y: -4 });
     undo.undo();
     expect(model(doc).players[id]).toMatchObject({ x: 5, y: -1 });
     undo.redo();
-    expect(model(doc).players[id]).toMatchObject({ x: 30, y: 4 });
+    expect(model(doc).players[id]).toMatchObject({ x: 30, y: -4 });
   });
 });
 

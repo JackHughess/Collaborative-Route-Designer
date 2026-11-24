@@ -176,13 +176,13 @@ describe("simulate", () => {
 
   it("uses the player's new spot when they move", () => {
     const doc = createPlayDoc({ name: "M", formation: "blank" });
-    const id = addPlayer(doc, { label: "X", position: "WR", x: 10, y: 0 });
+    const id = addPlayer(doc, { label: "X", position: "WR", x: 10, y: -5 });
     addRoute(doc, id, { points: [{ x: 10, y: 10, type: "line" }], speed: 5 });
     const before = readPlayModel(doc);
-    expect(simulate(before, 1)[id]).toEqual({ x: 10, y: 5 });
-    movePlayer(doc, id, 10, 5);
+    expect(simulate(before, 1)[id]).toEqual({ x: 10, y: 0 });
+    movePlayer(doc, id, 10, -2);
     const after = readPlayModel(doc, before);
-    expect(simulate(after, 0.5)[id]).toEqual({ x: 10, y: 7.5 });
+    expect(simulate(after, 0.5)[id]).toEqual({ x: 10, y: 0.5 });
   });
 });
 

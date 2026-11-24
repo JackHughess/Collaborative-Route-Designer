@@ -10,3 +10,6 @@ export const MIN_Y = -20;
 export const MAX_Y = 45;
 
 export const PLAYER_RADIUS = 0.9;
+
+/** Furthest downfield a player can line up: the whole token stays behind the line of scrimmage (y = 0). */
+export const MAX_PLAYER_Y = -PLAYER_RADIUS;

@@ -10,7 +10,6 @@ import {
 } from "react";
 import { playDuration, simulate } from "@/lib/field/geometry";
 import type { PlayModel, Point } from "@/lib/play/types";
-import next from "next";
 
 export const PLAYBACK_RATES = [0.25, 0.5, 1, 2] as const;
 export type PlaybackRate = (typeof PLAYBACK_RATES)[number];
@@ -67,6 +66,7 @@ export function usePlayback(model: PlayModel): Playback {
         setPlaying(false);
         return;
       }
+      frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
